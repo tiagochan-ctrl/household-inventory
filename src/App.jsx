@@ -242,6 +242,11 @@ export default function HouseholdInventory() {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, threshold: n } : it)));
   }
 
+  function setQty(id, value) {
+    const n = Math.max(0, Number(value) || 0);
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, qty: n } : it)));
+  }
+
   function addExpiryDate(id, date, qty) {
     if (!date) return;
     const q = Math.max(1, Number(qty) || 1);
@@ -540,7 +545,7 @@ export default function HouseholdInventory() {
               fontSize: 13,
             }}
           >
-            Pantry
+            Stock
           </button>
           <button
             onClick={() => setTab("shopping")}
@@ -629,9 +634,9 @@ export default function HouseholdInventory() {
             />
             {zones.map((zone) => {
               const q = search.trim().toLowerCase();
-              const zoneItems = items.filter(
-                (it) => it.zone === zone.key && (q === "" || it.name.toLowerCase().includes(q))
-              );
+              const zoneItems = items
+                .filter((it) => it.zone === zone.key && (q === "" || it.name.toLowerCase().includes(q)))
+                .sort((a, b) => a.name.localeCompare(b.name));
               if (q !== "" && zoneItems.length === 0) return null;
               const lowCount = zoneItems.filter(needsRestock).length;
               return (
@@ -784,20 +789,24 @@ export default function HouseholdInventory() {
                           >
                             −
                           </button>
-                          <span
+                          <input
+                            type="number"
+                            min="0"
+                            value={it.qty}
+                            onChange={(e) => setQty(it.id, e.target.value)}
                             style={{
-                              minWidth: 26,
+                              width: 40,
                               textAlign: "center",
                               fontSize: 14,
                               fontWeight: 600,
-                              padding: "2px 4px",
+                              padding: "2px 2px",
                               borderRadius: 6,
+                              border: "none",
                               background: low ? ALERT_BG : OK_BG,
                               color: low ? ALERT_FG : OK_FG,
+                              outline: "none",
                             }}
-                          >
-                            {it.qty}
-                          </span>
+                          />
                           <button
                             onClick={() => adjustQty(it.id, 1)}
                             aria-label={`Increase ${it.name}`}
@@ -1437,7 +1446,7 @@ export default function HouseholdInventory() {
 
             {expiringSoon.length === 0 && (
               <p style={{ fontSize: 13, color: MUTED, margin: "8px 0" }}>
-                Nothing with an expiry date coming up. Add dates from the Pantry tab to track this.
+                Nothing with an expiry date coming up. Add dates from the Stock tab to track this.
               </p>
             )}
             {expiringSoon.length > 0 &&
